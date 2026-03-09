@@ -1,17 +1,24 @@
-# Onion Event
+# Onion Thread Pool
 
-A lightweight, header-only, thread-safe C++20 event system.
+A lightweight, dynamic C++20 thread pool for dispatching asynchronous tasks.
 
-It provides a simple way to subscribe, unsubscribe, and trigger strongly-typed events with automatic cleanup when subscription handles go out of scope.
+It allows submitting tasks that are executed by a pool of persistent worker threads.  
+The pool size can be changed at runtime, and workers sleep efficiently when no tasks are available.
+
+The implementation is based on modern C++20 features such as `std::jthread` and `std::stop_token`.
 
 ---
 
 ## Features
 
-* Header-only (INTERFACE library)
-* Thread-safe
 * C++20 compliant
+* Dynamic worker thread count
+* Thread-safe task dispatch
+* Efficient worker sleep using `std::condition_variable`
+* Graceful thread shutdown using `std::stop_token`
+* No busy waiting
 * No external dependencies
+* Simple and lightweight
 
 ---
 
@@ -20,11 +27,11 @@ It provides a simple way to subscribe, unsubscribe, and trigger strongly-typed e
 If the library is included in your repository:
 
 ```cmake
-add_subdirectory(libs/event)
+add_subdirectory(libs/threadpool)
 
 target_link_libraries(your_target
     PRIVATE
-        onion_event
+        onion::threadpool
 )
 ```
 
@@ -33,42 +40,63 @@ target_link_libraries(your_target
 ## Basic Usage
 
 ```cpp
-#include <Event.hpp>
+#include <onion/ThreadPool.hpp>
+#include <iostream>
 
-onion::Event<MyEventArgs> event;
+onion::ThreadPool pool(4);
 
-auto handle = event.Subscribe([](const MyEventArgs& args)
+pool.Dispatch([]()
 {
-    std::cout << args.value << std::endl;
+    std::cout << "Hello from worker thread!" << std::endl;
 });
-
-event.Trigger(MyEventArgs{42});
-
-// Optional manual unsubscribe
-event.Unsubscribe(handle);
-
-// Or automatic unsubscribe when handle goes out of scope
 ```
 
+Tasks are executed asynchronously by the worker threads.
 
 ---
 
+## Dispatching Multiple Tasks
 
-## Disable Demo
+```cpp
+onion::ThreadPool pool(4);
 
-Disable demo:
-
-```bash
-cmake -DONION_BUILD_DEMO=OFF ..
+for (int i = 0; i < 10; ++i)
+{
+    pool.Dispatch([i]()
+    {
+        std::cout << "Task " << i << std::endl;
+    });
+}
 ```
 
----
-
-## Design Notes
-
-* Subscriptions are represented by `EventHandle` tokens.
-* When a token is destroyed, the associated handler is automatically ignored.
-* Expired handles are cleaned up lazily.
-* Events can be stack-allocated.
+Tasks are queued and executed by available workers.
 
 ---
+
+## Changing the Pool Size
+
+The number of worker threads can be adjusted at runtime.
+
+```cpp
+pool.SetPoolsCount(8);
+```
+
+New workers are created immediately.
+
+Reducing the count gracefully stops excess workers.
+
+```cpp
+pool.SetPoolsCount(2);
+```
+
+Stopped workers exit their loop after finishing their current task.
+
+---
+
+## Querying the Pool Size
+
+```cpp
+size_t workers = pool.GetPoolsCount();
+```
+
+Returns the current number of worker threads.
