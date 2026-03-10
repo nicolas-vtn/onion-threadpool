@@ -27,6 +27,7 @@ The implementation is based on modern C++20 features such as `std::jthread` and 
 If the library is included in your repository:
 
 ```cmake
+add_subdirectory(libs/threadsafequeue)
 add_subdirectory(libs/threadpool)
 
 target_link_libraries(your_target
@@ -34,6 +35,8 @@ target_link_libraries(your_target
         onion::threadpool
 )
 ```
+
+> Note: `onion::threadpool` requires the `onion::threadsafequeue` target to already exist.
 
 ---
 
@@ -100,3 +103,13 @@ size_t workers = pool.GetPoolsCount();
 ```
 
 Returns the current number of worker threads.
+
+---
+
+## Dependency
+
+This library requires:
+
+* **onion::threadsafequeue**
+
+The build will fail if the CMake target `onion::threadsafequeue` is not available.

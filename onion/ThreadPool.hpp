@@ -1,5 +1,7 @@
 #pragma once
 
+#include <onion/ThreadSafeQueue.hpp>
+
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -42,14 +44,10 @@ namespace onion
 
 		// ----- Private Members -----
 	  private:
+		mutable std::mutex m_MutexWorkers;
 		/// @brief A vector of worker threads that are part of the thread pool. Each thread runs the WorkerLoop function to process tasks from the task queue.
 		std::vector<std::jthread> m_Workers;
 		/// @brief A queue of tasks to be executed by the worker threads.
-		std::queue<std::function<void()>> m_Tasks;
-
-		/// @brief A mutex to protect access to the task queue and worker threads.
-		mutable std::mutex m_Mutex;
-		/// @brief A condition variable to notify worker threads of new tasks or stop requests.
-		std::condition_variable m_Condition;
+		ThreadSafeQueue<std::function<void()>> m_Tasks;
 	};
 } // namespace onion

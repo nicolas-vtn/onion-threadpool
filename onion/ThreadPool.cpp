@@ -12,31 +12,31 @@ namespace onion
 
 	ThreadPool::~ThreadPool()
 	{
-		for (auto& t : m_Workers)
-			t.request_stop();
+		{
+			std::lock_guard lock(m_MutexWorkers);
 
-		m_Condition.notify_all();
+			for (auto& t : m_Workers)
+				t.request_stop();
+
+			for (auto& t : m_Workers)
+				t.join();
+		}
 	}
 
 	void ThreadPool::Dispatch(std::function<void()> task)
 	{
-		{
-			std::lock_guard lock(m_Mutex);
-			m_Tasks.push(std::move(task));
-		}
-
-		m_Condition.notify_one();
+		m_Tasks.Push(std::move(task));
 	}
 
 	size_t ThreadPool::GetPoolsCount() const
 	{
-		std::lock_guard lock(m_Mutex);
+		std::lock_guard lock(m_MutexWorkers);
 		return m_Workers.size();
 	}
 
 	void ThreadPool::SetPoolsCount(size_t count)
 	{
-		std::lock_guard lock(m_Mutex);
+		std::lock_guard lock(m_MutexWorkers);
 
 		size_t current = m_Workers.size();
 
@@ -54,34 +54,43 @@ namespace onion
 
 			for (size_t i = 0; i < toRemove; ++i)
 			{
-				m_Workers.back().request_stop();
-				m_Workers.pop_back();
+				m_Workers[current - 1 - i].request_stop();
 			}
 
-			m_Condition.notify_all();
+			for (size_t i = 0; i < toRemove; ++i)
+			{
+				m_Workers.back().join();
+				m_Workers.pop_back();
+			}
 		}
 	}
 
 	void ThreadPool::WorkerLoop(std::stop_token st)
 	{
-		while (!st.stop_requested())
+		std::function<void()> task;
+		while (m_Tasks.WaitPop(task, st))
 		{
-			std::function<void()> task;
-
-			{
-				std::unique_lock lock(m_Mutex);
-
-				m_Condition.wait(lock, [&] { return !m_Tasks.empty() || st.stop_requested(); });
-
-				if (st.stop_requested())
-					return;
-
-				task = std::move(m_Tasks.front());
-				m_Tasks.pop();
-			}
-
 			task();
 		}
+
+		//while (!st.stop_requested())
+		//{
+		//	std::function<void()> task;
+
+		//	{
+		//		std::unique_lock lock(m_Mutex);
+
+		//		m_Condition.wait(lock, [&] { return !m_Tasks.empty() || st.stop_requested(); });
+
+		//		if (st.stop_requested())
+		//			return;
+
+		//		task = std::move(m_Tasks.front());
+		//		m_Tasks.pop();
+		//	}
+
+		//	task();
+		//}
 	}
 
 } // namespace onion
