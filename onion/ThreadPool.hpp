@@ -27,6 +27,9 @@ namespace onion
 		/// @param task The task to be executed, represented as a std::function<void()>.
 		void Dispatch(std::function<void()> task);
 
+		/// @brief Closes the thread pool by requesting all worker threads to stop and waiting for them to finish executing their current tasks. After calling this method, the thread pool will no longer accept new tasks and all worker threads will be terminated.
+		void Close();
+
 		// ----- Getters & Setters -----
 	  public:
 		/// @brief Gets the current number of worker threads in the thread pool.

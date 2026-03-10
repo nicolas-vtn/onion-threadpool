@@ -12,20 +12,25 @@ namespace onion
 
 	ThreadPool::~ThreadPool()
 	{
-		{
-			std::lock_guard lock(m_MutexWorkers);
-
-			for (auto& t : m_Workers)
-				t.request_stop();
-
-			for (auto& t : m_Workers)
-				t.join();
-		}
+		Close();
 	}
 
 	void ThreadPool::Dispatch(std::function<void()> task)
 	{
 		m_Tasks.Push(std::move(task));
+	}
+
+	void ThreadPool::Close()
+	{
+		std::lock_guard lock(m_MutexWorkers);
+
+		for (auto& t : m_Workers)
+			t.request_stop();
+
+		for (auto& t : m_Workers)
+			t.join();
+
+		m_Workers.clear();
 	}
 
 	size_t ThreadPool::GetPoolsCount() const
