@@ -63,7 +63,7 @@ Tasks are executed asynchronously by the worker threads.
 ```cpp
 onion::ThreadPool pool(4);
 
-for (int i = 0; i < 10; ++i)
+for (int i = 0; i < 10; i++)
 {
     pool.Dispatch([i]()
     {

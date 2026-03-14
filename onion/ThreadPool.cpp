@@ -4,7 +4,7 @@ namespace onion
 {
 	ThreadPool::ThreadPool(size_t count)
 	{
-		for (size_t i = 0; i < count; ++i)
+		for (size_t i = 0; i < count; i++)
 		{
 			m_Workers.emplace_back([this](std::stop_token st) { WorkerLoop(st); });
 		}
@@ -48,7 +48,7 @@ namespace onion
 		if (count > current)
 		{
 			// Spawn new workers
-			for (size_t i = current; i < count; ++i)
+			for (size_t i = current; i < count; i++)
 			{
 				m_Workers.emplace_back([this](std::stop_token st) { WorkerLoop(st); });
 			}
@@ -57,12 +57,12 @@ namespace onion
 		{
 			size_t toRemove = current - count;
 
-			for (size_t i = 0; i < toRemove; ++i)
+			for (size_t i = 0; i < toRemove; i++)
 			{
 				m_Workers[current - 1 - i].request_stop();
 			}
 
-			for (size_t i = 0; i < toRemove; ++i)
+			for (size_t i = 0; i < toRemove; i++)
 			{
 				m_Workers.back().join();
 				m_Workers.pop_back();

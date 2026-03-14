@@ -7,7 +7,7 @@ void DummyTask(int taskId)
 	auto threadId = std::this_thread::get_id();
 	std::cout << "Executing dummy task " << taskId << " on thread: " << threadId << std::endl;
 
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 5; i++)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		std::cout << "Dummy task " << taskId << " iteration " << i + 1 << " on thread: " << threadId << std::endl;
