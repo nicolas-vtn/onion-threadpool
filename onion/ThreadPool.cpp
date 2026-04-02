@@ -24,6 +24,8 @@ namespace onion
 	{
 		std::lock_guard lock(m_MutexWorkers);
 
+		m_Tasks.Clear();
+
 		for (auto& t : m_Workers)
 			t.request_stop();
 
